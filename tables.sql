@@ -455,7 +455,6 @@ WHERE r.CustomerID IN (
 --create a new customer    if the cretion sucseed it will retuen 1 
 USE project
 GO
-
 CREATE PROCEDURE sp_CreateNewUser
     @FirstName NVARCHAR(50),
     @LastName NVARCHAR(50),
@@ -466,23 +465,30 @@ CREATE PROCEDURE sp_CreateNewUser
     @UserTypeID INT
 AS
 BEGIN
-    -- Initialize return value to 0 (success)
-    DECLARE @ReturnValue INT = 0
+    BEGIN TRANSACTION;  -- Start the transaction
+    BEGIN TRY
+        -- Check if the email already exists
+        IF EXISTS (SELECT 1 FROM Customers WHERE Email = @Email)
+        BEGIN
+            ROLLBACK;
+            RETURN 0;  -- Email already exists
+        END
 
-    -- Check if the email already exists
-    IF EXISTS (SELECT 1 FROM Customers WHERE Email = @Email)
-    BEGIN
-        SET @ReturnValue = -1  -- Email already exists
-        RETURN @ReturnValue
-    END
+        -- Insert the new user
+        INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address, Password, UserTypeID)
+        VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @Address, @Password, @UserTypeID)
 
-    -- Insert the new user
-    INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address, Password, UserTypeID)
-    VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @Address, @Password, @UserTypeID)
-
-    -- Return success
-    RETURN @ReturnValue
-END
+        -- Commit the transaction if successful
+        COMMIT;
+        
+        -- Return success
+        RETURN 1;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK;  -- Rollback the transaction if there's an error
+        RETURN 0;
+    END CATCH;
+END;
 GO
 
 
@@ -503,24 +509,33 @@ CREATE PROCEDURE sp_CreateNewEmployee
     @UserTypeID INT
 AS
 BEGIN
-    -- Initialize return value to 0 (success)
-    DECLARE @ReturnValue INT = 1
+-- we use transaction to make sure that the employee will be added only if the email is not exist
+    BEGIN TRANSACTION;  -- Start the transaction
+    BEGIN TRY
+        -- Check if the email already exists
+        IF EXISTS (SELECT 1 FROM Employees WHERE Email = @Email)
+        BEGIN
+            ROLLBACK;
+            RETURN 0;  -- Email already exists
+        END
 
-    -- Check if the email already exists
-    IF EXISTS (SELECT 1 FROM Employees WHERE Email = @Email)
-    BEGIN
-        SET @ReturnValue = 0  -- Email already exists
-        RETURN @ReturnValue
-    END
+        -- Insert the new employee
+        INSERT INTO Employees (FirstName, LastName, Email, PhoneNumber, HireDate, Salary, Password, UserTypeID)
+        VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @HireDate, @Salary, @Password, @UserTypeID)
 
-    -- Insert the new employee
-    INSERT INTO Employees (FirstName, LastName, Email, PhoneNumber, HireDate, Salary, Password, UserTypeID)
-    VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @HireDate, @Salary, @Password, @UserTypeID)
-
-    -- Return success
-    RETURN @ReturnValue
-END
+        -- Commit the transaction if successful
+        COMMIT;
+        
+        -- Return success
+        RETURN 1;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK;  -- Rollback the transaction if there's an error
+        RETURN 0;
+    END CATCH;
+END;
 GO
+
 
 
 
@@ -536,12 +551,13 @@ CREATE PROCEDURE sp_InsertOrderWithProducts
     @CustomerID INT,
     @MenuItemIDs NVARCHAR(MAX),  -- Comma-separated list of MenuItemIDs
     @Quantities NVARCHAR(MAX),   -- Comma-separated list of Quantities
-    @Success BIT OUTPUT,             -- Output parameter to indicate success or failure
-    @Message NVARCHAR(255) OUTPUT    -- Output parameter to hold the message
+    @Success BIT OUTPUT,         -- Output parameter to indicate success or failure
+    @Message NVARCHAR(255) OUTPUT-- Output parameter to hold the message
 AS
 BEGIN
     SET NOCOUNT ON;
-
+-- we use transaction to make sure that the order will be added only if the order details are added
+    BEGIN TRANSACTION;  -- Start the transaction
     BEGIN TRY
         DECLARE @NewOrderID INT;
 
@@ -570,13 +586,19 @@ BEGIN
         FROM MenuItemsCTE m
         JOIN QuantitiesCTE q ON m.RowNum = q.RowNum;
 
+        -- Commit the transaction if successful
+        COMMIT;
+        
         SET @Success = 1;
         SET @Message = 'Order and OrderProducts insertion was successful.';
+        RETURN 1;
     END TRY
     BEGIN CATCH
+        ROLLBACK;  -- Rollback the transaction if there's an error
         SET @Success = 0;
         SET @Message = ERROR_MESSAGE();
-    END CATCH
+        RETURN 0;
+    END CATCH;
 END;
 GO
 
@@ -622,9 +644,9 @@ EXEC sp_AddMenuItem @Name='Cheeseburger', @Description='Delicious burger with ch
 
 
 --find available tables
+-- we use transaction to make sure that the table will be available when the customer make the reservation
 USE project
 GO
-
 CREATE PROCEDURE sp_MakeReservation
     @CustomerEmail NVARCHAR(100),
     @StartTime DATETIME,
@@ -632,53 +654,71 @@ CREATE PROCEDURE sp_MakeReservation
     @OutputMessage NVARCHAR(255) OUTPUT
 AS
 BEGIN
-    -- Declare variables
-    DECLARE @CustomerID INT
-    DECLARE @EndTime DATETIME
-    DECLARE @AvailableTableID INT
+    SET NOCOUNT ON;
 
-    -- Initialize variables
-    SET @EndTime = DATEADD(HOUR, 2, @StartTime) -- 2 hours after the start time
+    BEGIN TRANSACTION;  -- Start the transaction
+    BEGIN TRY
+        -- Declare variables
+        DECLARE @CustomerID INT
+        DECLARE @EndTime DATETIME
+        DECLARE @AvailableTableID INT
 
-    -- Check if the customer already exists
-    SELECT @CustomerID = CustomerID FROM Customers WHERE Email = @CustomerEmail
+        -- Initialize variables
+        SET @EndTime = DATEADD(HOUR, 2, @StartTime) -- 2 hours after the start time
 
-    -- If customer doesn't exist, exit the procedure
-    IF @CustomerID IS NULL
-    BEGIN
-        SET @OutputMessage = 'Customer does not exist.'
-        RETURN
-    END
+        -- Check if the customer already exists
+        SELECT @CustomerID = CustomerID FROM Customers WHERE Email = @CustomerEmail
 
-    -- Check for an available table
-    SELECT TOP 1 @AvailableTableID = T.TableID
-    FROM Tables T
-    WHERE T.Capacity >= @NumberOfPeople
-    AND NOT EXISTS (
-        SELECT 1 FROM Reservations R
-        WHERE R.TableID = T.TableID
-        AND (
-            (R.StartTime <= @StartTime AND R.EndTime >= @StartTime)
-            OR (R.StartTime <= @EndTime AND R.EndTime >= @EndTime)
-            OR (@StartTime <= R.StartTime AND @EndTime >= R.StartTime)
+        -- If customer doesn't exist, exit the procedure
+        IF @CustomerID IS NULL
+        BEGIN
+            SET @OutputMessage = 'Customer does not exist.'
+            ROLLBACK;  -- Rollback the transaction
+            RETURN 0;
+        END
+
+        -- Check for an available table
+        SELECT TOP 1 @AvailableTableID = T.TableID
+        FROM Tables T
+        WHERE T.Capacity >= @NumberOfPeople
+        AND NOT EXISTS (
+            SELECT 1 FROM Reservations R
+            WHERE R.TableID = T.TableID
+            AND (
+                (R.StartTime <= @StartTime AND R.EndTime >= @StartTime)
+                OR (R.StartTime <= @EndTime AND R.EndTime >= @EndTime)
+                OR (@StartTime <= R.StartTime AND @EndTime >= R.StartTime)
+            )
         )
-    )
-    ORDER BY T.Capacity ASC
+        ORDER BY T.Capacity ASC
 
-    -- If an available table is found, make the reservation
-    IF @AvailableTableID IS NOT NULL
-    BEGIN
-        INSERT INTO Reservations (CustomerID, TableID, StartTime, EndTime)
-        VALUES (@CustomerID, @AvailableTableID, @StartTime, @EndTime)
+        -- If an available table is found, make the reservation
+        IF @AvailableTableID IS NOT NULL
+        BEGIN
+            INSERT INTO Reservations (CustomerID, TableID, StartTime, EndTime)
+            VALUES (@CustomerID, @AvailableTableID, @StartTime, @EndTime)
 
-        SET @OutputMessage = 'Reservation made successfully.'
-    END
-    ELSE
-    BEGIN
-        SET @OutputMessage = 'No available tables for the given time and capacity.'
-    END
-END
+            -- Commit the transaction if successful
+            COMMIT;
+
+            SET @OutputMessage = 'Reservation made successfully.';
+            RETURN 1;
+        END
+        ELSE
+        BEGIN
+            SET @OutputMessage = 'No available tables for the given time and capacity.';
+            ROLLBACK;  -- Rollback the transaction
+            RETURN 0;
+        END
+    END TRY
+    BEGIN CATCH
+        ROLLBACK;  -- Rollback the transaction if there's an error
+        SET @OutputMessage = ERROR_MESSAGE();
+        RETURN 0;
+    END CATCH;
+END;
 GO
+
 
 
 
