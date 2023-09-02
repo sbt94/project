@@ -28,6 +28,9 @@ IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_CreateNewUs
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_CreateNewEmployee')
     DROP PROCEDURE sp_CreateNewEmployee;
 GO
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_AddMenuItem')
+    DROP PROCEDURE sp_AddMenuItem;
+GO
 
 USE project
 -- Check and drop the tr_Customers_Delete_Log trigger if it exists
@@ -444,23 +447,6 @@ WHERE r.CustomerID IN (
     )
 );
 
--- use project
--- -- Parameters you'd provide:
--- DECLARE @desiredTimeStart DATETIME = '2023-09-02 19:00:00';
--- DECLARE @desiredTimeEnd DATETIME = '2023-09-02 21:00:00';
-
--- -- Query to find available tables:
--- SELECT t.TableID, t.Capacity
--- FROM Tables t
--- LEFT JOIN Reservations r ON t.TableID = r.TableID
--- AND (
---     (r.StartTime <= @desiredTimeStart AND r.EndTime > @desiredTimeStart) OR
---     (r.StartTime < @desiredTimeEnd AND r.EndTime >= @desiredTimeEnd) OR
---     (r.StartTime >= @desiredTimeStart AND r.EndTime <= @desiredTimeEnd)
--- )
--- WHERE r.TableID IS NULL;
--- GO
-
 
 ----------------------------------------------------------------
 ------------------procedures------------------------------------
@@ -595,7 +581,24 @@ END;
 GO
 
 
+USE project;
+GO
 
+CREATE PROCEDURE sp_AddMenuItem
+    @Name NVARCHAR(100),
+    @Description NVARCHAR(255) = NULL, -- Making this optional by setting a default of NULL
+    @Price FLOAT
+AS
+BEGIN
+    -- Insert the provided details into the MenuItems table
+    INSERT INTO MenuItems (Name, Description, Price)
+    VALUES (@Name, @Description, @Price);
+    
+    -- You can add any additional logging or error handling here if needed
+END;
+GO
+
+EXEC sp_AddMenuItem @Name='Cheeseburger', @Description='Delicious burger with cheese', @Price=9.99;
 
 
 -- DECLARE @Success BIT
