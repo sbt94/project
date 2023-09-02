@@ -764,3 +764,10 @@ GO
 
 -- Grant execute permissions on sp_CreateNewEmployee
 GRANT EXECUTE ON sp_CreateNewEmployee TO ManagerUser;
+
+USE project;
+GO
+
+-- Grant execute permissions on sp_GetUserTypeByEmail to ManagerUser
+GRANT EXECUTE ON sp_GetUserTypeByEmail TO ManagerUser;
+GO
