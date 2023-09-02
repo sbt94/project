@@ -16,9 +16,17 @@ DROP TABLE IF EXISTS UserTypes;
 
 USE project
 
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetUserTypeByEmail')
+    DROP PROCEDURE sp_GetUserTypeByEmail;
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_MakeReservation')
+    DROP PROCEDURE sp_MakeReservation;
+
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_InsertNewOrder')
     DROP PROCEDURE sp_InsertNewOrder;
-
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_CreateNewUser')
+    DROP PROCEDURE sp_CreateNewUser;
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_CreateNewEmployee')
+    DROP PROCEDURE sp_CreateNewEmployee;
 GO
 
 USE project
@@ -98,7 +106,6 @@ CREATE TABLE Tables (
    TableID INT PRIMARY KEY IDENTITY(1,1),
    TableNumber INT NOT NULL UNIQUE,
    Capacity INT NOT NULL,
-   Status NVARCHAR(50) DEFAULT 'Available'
 );
 
 -- MenuItems
@@ -349,10 +356,10 @@ INSERT INTO MenuItems (Name, Description, Price) VALUES
 ('Burger', 'Juicy beef burger', 10);
 
 -- Insert data for Tables (only once)
-INSERT INTO Tables (TableNumber, Capacity, Status) VALUES 
-(101, 4, 'Available'),
-(102, 2, 'Available'),
-(103, 6, 'Booked');
+INSERT INTO Tables (TableNumber, Capacity) VALUES 
+(101, 4 ),
+(102, 2 ),
+(103, 6 );
 
 -- Insert data for Customers
 INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address, Password, UserTypeID) VALUES 
@@ -600,7 +607,7 @@ BEGIN
     -- Check for an available table
     SELECT TOP 1 @AvailableTableID = T.TableID
     FROM Tables T
-    WHERE T.Capacity >= @NumberOfPeople AND T.Status = 'Available'
+    WHERE T.Capacity >= @NumberOfPeople
     AND NOT EXISTS (
         SELECT 1 FROM Reservations R
         WHERE R.TableID = T.TableID
