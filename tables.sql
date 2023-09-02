@@ -296,6 +296,50 @@ BEGIN
 END;
 GO
 
+USE project
+
+-- Insert data for MenuItems
+INSERT INTO MenuItems (Name, Description, Price) VALUES 
+('Pizza', 'Delicious cheese pizza', 15),
+('Pasta', 'Creamy alfredo pasta', 12),
+('Burger', 'Juicy beef burger', 10);
+
+-- Insert data for Tables (only once)
+INSERT INTO Tables (TableNumber, Capacity, Status) VALUES 
+(101, 4, 'Available'),
+(102, 2, 'Available'),
+(103, 6, 'Booked');
+
+-- Insert data for Customers
+INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address, Password, UserTypeID) VALUES 
+('John', 'Doe', 'john@example.com', '1234567890', '123 Main St', 'pass123', 3),
+('Jane', 'Smith', 'jane@example.com', '0987654321', '456 Elm St', 'pass456', 1),
+('Lucas', 'Martin', 'lucas@example.com', '1234567890', '789 Oak St', 'pass789', 2);
+
+-- Insert data for Reservations
+INSERT INTO Reservations (CustomerID, TableID, ReservationTime) VALUES 
+(1, 1, '2023-09-10 19:00:00'),   -- Note: Using TableID (1 for 101, 2 for 102, 3 for 103)
+(2, 3, '2023-09-11 20:00:00');
+
+-- Insert data for Orders
+INSERT INTO Orders (CustomerID, EmployeeID, TotalPrice, DeliveryAddress, Status) VALUES 
+(1, NULL, 25, '123 Main St', 'Delivered'),
+(2, NULL, 35, '456 Elm St', 'Pending'),
+(3, NULL, 45, '789 Oak St', 'Pending');
+
+-- Insert data for OrderDetails
+INSERT INTO OrderDetails (OrderID, MenuItemID, Quantity) VALUES 
+(1, 1, 1),   -- John ordered a Pizza
+(1, 2, 1),   -- John also ordered a Pasta
+(10, 1, 2),  -- Lucas ordered 2 Pizzas
+(10, 3, 3),  -- Lucas also ordered 3 Burgers
+(11, 2, 1),  -- Jane ordered a Pasta
+(12, 3, 1),  -- Jane ordered a Burger
+(12, 1, 1),  -- Jane ordered a Pizza
+(12, 2, 1),  -- Jane ordered a Pasta 
+(2, 3, 3);   -- Jane ordered 3 Burgers
+GO
+
 use project
 -- Retrieve the names of customers who have placed orders for a specific menu item
 SELECT c.FirstName, c.LastName
@@ -309,11 +353,12 @@ WHERE c.CustomerID IN (
         WHERE od.MenuItemID IN (
             SELECT mi.MenuItemID
             FROM MenuItems mi
-            WHERE mi.Name = 'SpecificMenuItemName'  -- Replace with the actual menu item name
+            WHERE mi.Name = 'Burger'  -- Example menu item
         )
     )
 );
 GO
+
 
 use project
 -- Retrieve the tables that were reserved by customers who have also placed an order with a total price greater than a specific value
@@ -323,7 +368,7 @@ JOIN Reservations r ON t.TableID = r.TableID
 WHERE r.CustomerID IN (
     SELECT o.CustomerID
     FROM Orders o
-    WHERE o.TotalPrice > 100  -- Example value
+    WHERE o.TotalPrice > 20  -- Example value
     AND o.CustomerID IN (
         SELECT c.CustomerID
         FROM Customers c
@@ -334,3 +379,4 @@ WHERE r.CustomerID IN (
         )
     )
 );
+
