@@ -1,6 +1,6 @@
 USE project
 -- Drop child tables (those having foreign keys)
-DROP TABLE IF EXISTS OrderDetails;
+DROP TABLE IF EXISTS OrderProduct;
 DROP TABLE IF EXISTS Orders;
 DROP TABLE IF EXISTS Reservations;
 
@@ -21,8 +21,8 @@ IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetUserType
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_MakeReservation')
     DROP PROCEDURE sp_MakeReservation;
 
-IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_InsertNewOrder')
-    DROP PROCEDURE sp_InsertNewOrder;
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_InsertOrderWithProducts')
+    DROP PROCEDURE sp_InsertOrderWithProducts;
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_CreateNewUser')
     DROP PROCEDURE sp_CreateNewUser;
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_CreateNewEmployee')
@@ -72,7 +72,7 @@ CREATE TABLE UserTypes (
    UserType NVARCHAR(50) NOT NULL
 );
 
-INSERT INTO UserTypes (UserType) VALUES ('Manager'), ('Employee'), ('Customer');
+INSERT INTO UserTypes (UserType) VALUES ('Manager'), ('Employee'), ('Customer'); -- only manager can add new employee
 GO
 
 USE project
@@ -85,7 +85,7 @@ CREATE TABLE Customers (
    PhoneNumber NVARCHAR(20),
    Address NVARCHAR(250),
    Password NVARCHAR(255),
-   UserTypeID INT FOREIGN KEY REFERENCES UserTypes(UserTypeID)
+   UserTypeID INT FOREIGN KEY REFERENCES UserTypes(UserTypeID) DEFAULT 3
 );
 
 -- Employees
@@ -128,21 +128,18 @@ CREATE TABLE Reservations (
 use project
 -- Orders
 CREATE TABLE Orders (
-   OrderID INT PRIMARY KEY IDENTITY(1,1),
-   CustomerID INT FOREIGN KEY REFERENCES Customers(CustomerID),
-   EmployeeID INT FOREIGN KEY REFERENCES Employees(EmployeeID),
-   OrderDate DATETIME DEFAULT GETDATE(),
-   TotalPrice DECIMAL(10,2) NOT NULL,
-   DeliveryAddress NVARCHAR(250),
-   Status NVARCHAR(50) DEFAULT 'Pending'
+    OrderID INT PRIMARY KEY IDENTITY(1,1),
+    CustomerID INT FOREIGN KEY REFERENCES Customers(CustomerID),
+    OrderDate DATETIME DEFAULT GETDATE(),
+    TotalPrice FLOAT DEFAULT 0
 );
 
 -- OrderDetails
-CREATE TABLE OrderDetails (
-   OrderDetailID INT PRIMARY KEY IDENTITY(1,1),
-   OrderID INT FOREIGN KEY REFERENCES Orders(OrderID),
-   MenuItemID INT FOREIGN KEY REFERENCES MenuItems(MenuItemID),
-   Quantity INT NOT NULL
+CREATE TABLE OrderProduct (
+    OrderDetailID INT PRIMARY KEY IDENTITY(1,1),
+    OrderID INT FOREIGN KEY REFERENCES Orders(OrderID),
+    MenuItemID INT FOREIGN KEY REFERENCES MenuItems(MenuItemID),
+    Quantity INT NOT NULL
 );
 
 -- Logs
@@ -249,9 +246,7 @@ BEGIN
 END;
 GO
 
-
-
-CREATE TRIGGER tr_Orders_Insert_Log
+CREATE TRIGGER tr_Orders_After_Insert
 ON Orders
 AFTER INSERT
 AS
@@ -260,12 +255,12 @@ BEGIN
     SELECT 
         i.CustomerID, 
         'Customer', 
-        'Order', 
-        'New order placed with total price ' + CAST(i.TotalPrice AS NVARCHAR(10)) + '.'
+        'Insert Order', 
+        'New order placed with OrderID: ' + CAST(i.OrderID AS NVARCHAR(10)) + ' and total price of ' + CAST(i.TotalPrice AS NVARCHAR(50)) + '.'
     FROM INSERTED i;
 END;
 GO
-CREATE TRIGGER tr_Orders_Delete_Log
+CREATE TRIGGER tr_Orders_After_Delete
 ON Orders
 AFTER DELETE
 AS
@@ -274,12 +269,45 @@ BEGIN
     SELECT 
         d.CustomerID, 
         'Customer', 
-        'Order Deletion', 
-        'Order with total price ' + CAST(d.TotalPrice AS NVARCHAR(10)) + ' deleted.'
+        'Delete Order', 
+        'Order with OrderID: ' + CAST(d.OrderID AS NVARCHAR(10)) + ' and total price of ' + CAST(d.TotalPrice AS NVARCHAR(50)) + ' was deleted.'
     FROM DELETED d;
 END;
 GO
 
+---
+-- Assuming you have a Prices column in the MenuItems table
+-- Trigger on the Orders table
+CREATE TRIGGER tr_SetDefaultTotalPriceOnOrder
+ON Orders
+AFTER INSERT
+AS
+BEGIN
+    -- Setting default price, this is optional as you already have a default in the table definition
+    UPDATE Orders
+    SET TotalPrice = 0
+    WHERE OrderID IN (SELECT OrderID FROM inserted)
+END
+GO
+
+-- Trigger on the OrderProduct table
+CREATE TRIGGER tr_UpdateTotalPriceAfterOrderProductInsert
+ON OrderProduct
+AFTER INSERT
+AS
+BEGIN
+    -- Update the TotalPrice in the Orders table based on the inserted products
+    UPDATE Orders
+    SET TotalPrice = TotalPrice + (i.Quantity * m.Price)
+    FROM Orders o
+    JOIN inserted i ON o.OrderID = i.OrderID
+    JOIN MenuItems m ON i.MenuItemID = m.MenuItemID
+END
+GO
+
+--------------------------------------------------------------------------------------------
+--------------------------------------insert data------------------------------------------
+--------------------------------------------------------------------------------------------
 
 use project
 DECLARE @counter INT = 1;
@@ -317,15 +345,14 @@ BEGIN
     SET @dish = @dish + 1;
 END;
 
+use project
 DECLARE @orderCounter INT = 1;
 WHILE @orderCounter <= 100 -- Assuming 100 customers
 BEGIN
     -- Insert order
-    INSERT INTO Orders (CustomerID, EmployeeID, TotalPrice, Status)
+    INSERT INTO Orders (CustomerID, TotalPrice)
     VALUES (@orderCounter, 
-           (RAND() * 100) + 1,  -- Assigning random employee 
-           (3.99 + (RAND() * 40)),  -- Random total price
-           'Pending');
+           (3.99 + (RAND() * 40)));  -- Random total price
 
     -- Get the last inserted Order ID
     DECLARE @lastOrderID INT;
@@ -335,7 +362,7 @@ BEGIN
     DECLARE @detailCounter INT = 1;
     WHILE @detailCounter <= 3
     BEGIN
-        INSERT INTO OrderDetails (OrderID, MenuItemID, Quantity)
+        INSERT INTO OrderProduct (OrderID, MenuItemID, Quantity)
         VALUES (@lastOrderID, 
                (RAND() * 20) + 1,  -- Random dish from the menu
                (RAND() * 3) + 1);  -- Random quantity between 1 and 3
@@ -373,24 +400,29 @@ INSERT INTO Reservations (CustomerID, TableID, StartTime) VALUES
 (2, 3, '2023-09-11 20:00:00');
 
 -- Insert data for Orders
-INSERT INTO Orders (CustomerID, EmployeeID, TotalPrice, DeliveryAddress, Status) VALUES 
-(1, NULL, 25, '123 Main St', 'Delivered'),
-(2, NULL, 35, '456 Elm St', 'Pending'),
-(3, NULL, 45, '789 Oak St', 'Pending');
+INSERT INTO Orders (CustomerID, TotalPrice)
+VALUES (1, 25.99), 
+       (2, 30.50), 
+       (3, 15.75);
 
--- Insert data for OrderDetails
-INSERT INTO OrderDetails (OrderID, MenuItemID, Quantity) VALUES 
-(1, 1, 1),   -- John ordered a Pizza
-(1, 2, 1),   -- John also ordered a Pasta
-(10, 1, 2),  -- Lucas ordered 2 Pizzas
-(10, 3, 3),  -- Lucas also ordered 3 Burgers
-(11, 2, 1),  -- Jane ordered a Pasta
-(12, 3, 1),  -- Jane ordered a Burger
-(12, 1, 1),  -- Jane ordered a Pizza
-(12, 2, 1),  -- Jane ordered a Pasta 
-(2, 3, 3);   -- Jane ordered 3 Burgers
+INSERT INTO OrderProduct (OrderID, MenuItemID, Quantity)
+VALUES (1, 1, 2),  -- 2 units of MenuItem 1
+       (1, 2, 1),  -- 1 unit of MenuItem 2
+       (1, 3, 1);  -- 1 unit of MenuItem 3
+
+-- Details for Order with ID 2
+INSERT INTO OrderProduct (OrderID, MenuItemID, Quantity)
+VALUES (2, 4, 2),
+       (2, 5, 2),
+       (2, 6, 1);
+
+-- Details for Order with ID 3
+INSERT INTO OrderProduct (OrderID, MenuItemID, Quantity)
+VALUES (3, 7, 1),
+       (3, 8, 1),
+       (3, 9, 2),
+       (3, 10, 1);
 GO
-
 
 use project
 -- Retrieve the tables that were reserved by customers who have also placed an order with a total price greater than a specific value
@@ -412,22 +444,22 @@ WHERE r.CustomerID IN (
     )
 );
 
-use project
--- Parameters you'd provide:
-DECLARE @desiredTimeStart DATETIME = '2023-09-02 19:00:00';
-DECLARE @desiredTimeEnd DATETIME = '2023-09-02 21:00:00';
+-- use project
+-- -- Parameters you'd provide:
+-- DECLARE @desiredTimeStart DATETIME = '2023-09-02 19:00:00';
+-- DECLARE @desiredTimeEnd DATETIME = '2023-09-02 21:00:00';
 
--- Query to find available tables:
-SELECT t.TableID, t.Capacity
-FROM Tables t
-LEFT JOIN Reservations r ON t.TableID = r.TableID
-AND (
-    (r.StartTime <= @desiredTimeStart AND r.EndTime > @desiredTimeStart) OR
-    (r.StartTime < @desiredTimeEnd AND r.EndTime >= @desiredTimeEnd) OR
-    (r.StartTime >= @desiredTimeStart AND r.EndTime <= @desiredTimeEnd)
-)
-WHERE r.TableID IS NULL;
-GO
+-- -- Query to find available tables:
+-- SELECT t.TableID, t.Capacity
+-- FROM Tables t
+-- LEFT JOIN Reservations r ON t.TableID = r.TableID
+-- AND (
+--     (r.StartTime <= @desiredTimeStart AND r.EndTime > @desiredTimeStart) OR
+--     (r.StartTime < @desiredTimeEnd AND r.EndTime >= @desiredTimeEnd) OR
+--     (r.StartTime >= @desiredTimeStart AND r.EndTime <= @desiredTimeEnd)
+-- )
+-- WHERE r.TableID IS NULL;
+-- GO
 
 
 ----------------------------------------------------------------
@@ -510,50 +542,61 @@ GO
 --add new reservetion
 
 
-
---add new order
+-- add new order
 USE project
 GO
-CREATE PROCEDURE sp_InsertNewOrder
-(
+
+CREATE PROCEDURE sp_InsertOrderWithProducts
     @CustomerID INT,
-    @EmployeeID INT,
-    @TotalPrice DECIMAL(10,2),
-    @DeliveryAddress NVARCHAR(250),
-    @Status NVARCHAR(50) = 'Pending', -- Using default value as 'Pending'
+    @MenuItemIDs NVARCHAR(MAX),  -- Comma-separated list of MenuItemIDs
+    @Quantities NVARCHAR(MAX),   -- Comma-separated list of Quantities
     @Success BIT OUTPUT,             -- Output parameter to indicate success or failure
     @Message NVARCHAR(255) OUTPUT    -- Output parameter to hold the message
-)
 AS
 BEGIN
     SET NOCOUNT ON;
+
     BEGIN TRY
-    -- Insert new order into Orders table
-        INSERT INTO Orders 
+        DECLARE @NewOrderID INT;
+
+        -- Insert new order into Orders table
+        INSERT INTO Orders (CustomerID)
+        VALUES (@CustomerID);
+
+        -- Get the ID of the newly inserted order
+        SET @NewOrderID = SCOPE_IDENTITY();
+
+        -- Split MenuItemIDs and Quantities
+        ;WITH MenuItemsCTE AS
         (
-            CustomerID,
-            EmployeeID,
-            TotalPrice,
-            DeliveryAddress,
-            Status
-        )
-        VALUES 
+            SELECT value AS MenuItemID, ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum
+            FROM STRING_SPLIT(@MenuItemIDs, ',')
+        ),
+        QuantitiesCTE AS
         (
-            @CustomerID,
-            @EmployeeID,
-            @TotalPrice,
-            @DeliveryAddress,
-            @Status
+            SELECT value AS Quantity, ROW_NUMBER() OVER (ORDER BY (SELECT NULL)) AS RowNum
+            FROM STRING_SPLIT(@Quantities, ',')
         )
-        SET @Success = 1
-        SET @Message = 'Order insertion was successful.'
+
+        -- Insert product details for the new order
+        INSERT INTO OrderProduct (OrderID, MenuItemID, Quantity)
+        SELECT @NewOrderID, CAST(m.MenuItemID AS INT), CAST(q.Quantity AS INT) 
+        FROM MenuItemsCTE m
+        JOIN QuantitiesCTE q ON m.RowNum = q.RowNum;
+
+        SET @Success = 1;
+        SET @Message = 'Order and OrderProducts insertion was successful.';
     END TRY
     BEGIN CATCH
-        SET @Success = 0
-        SET @Message = ERROR_MESSAGE()
+        SET @Success = 0;
+        SET @Message = ERROR_MESSAGE();
     END CATCH
-END
+END;
 GO
+
+
+
+
 
 -- DECLARE @Success BIT
 -- DECLARE @ResultMessage NVARCHAR(255)
@@ -673,3 +716,51 @@ GO
 ------------------------accsess---------------------------------
 ----------------------------------------------------------------
 
+-- Create Manager login
+CREATE LOGIN Manager WITH PASSWORD = '12345';
+GO
+
+-- Create Employee login
+CREATE LOGIN Employee WITH PASSWORD = '6789';
+GO
+
+-- Create Customer login
+CREATE LOGIN Customer WITH PASSWORD = '54321';
+GO
+
+
+USE project;
+GO
+
+-- Create a database user for Manager and associate it with the login
+CREATE USER ManagerUser FOR LOGIN Manager;
+GO
+
+-- Create a database user for Employee and associate it with the login
+CREATE USER EmployeeUser FOR LOGIN Employee;
+GO
+
+-- Create a database user for Customer and associate it with the login
+CREATE USER CustomerUser FOR LOGIN Customer;
+GO
+
+
+-- Grant SELECT permission on the Customers table to the CustomerUser
+USE project;
+GO
+
+-- Grant execute permissions on sp_InsertOrderWithProducts
+GRANT EXECUTE ON sp_InsertOrderWithProducts TO ManagerUser, EmployeeUser, CustomerUser;
+GO
+
+-- Grant execute permissions on sp_MakeReservation
+GRANT EXECUTE ON sp_MakeReservation TO ManagerUser, EmployeeUser, CustomerUser;
+GO
+
+-- Grant execute permissions on sp_CreateNewUser
+GRANT EXECUTE ON sp_CreateNewUser TO ManagerUser, EmployeeUser, CustomerUser;
+GO
+
+
+-- Grant execute permissions on sp_CreateNewEmployee
+GRANT EXECUTE ON sp_CreateNewEmployee TO ManagerUser;
