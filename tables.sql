@@ -106,7 +106,9 @@ CREATE TABLE Reservations (
    ReservationID INT PRIMARY KEY IDENTITY(1,1),
    CustomerID INT FOREIGN KEY REFERENCES Customers(CustomerID),
    TableID INT FOREIGN KEY REFERENCES Tables(TableID),
-   ReservationTime DATETIME NOT NULL
+   ReservationTime DATETIME NOT NULL,
+   StartTime DATETIME,
+   EndTime DATETIME
 );
 
 -- Orders
@@ -340,25 +342,6 @@ INSERT INTO OrderDetails (OrderID, MenuItemID, Quantity) VALUES
 (2, 3, 3);   -- Jane ordered 3 Burgers
 GO
 
-use project
--- Retrieve the names of customers who have placed orders for a specific menu item
-SELECT c.FirstName, c.LastName
-FROM Customers c
-WHERE c.CustomerID IN (
-    SELECT o.CustomerID
-    FROM Orders o
-    WHERE o.OrderID IN (
-        SELECT od.OrderID
-        FROM OrderDetails od
-        WHERE od.MenuItemID IN (
-            SELECT mi.MenuItemID
-            FROM MenuItems mi
-            WHERE mi.Name = 'Burger'  -- Example menu item
-        )
-    )
-);
-GO
-
 
 use project
 -- Retrieve the tables that were reserved by customers who have also placed an order with a total price greater than a specific value
@@ -380,3 +363,19 @@ WHERE r.CustomerID IN (
     )
 );
 
+use project
+-- Parameters you'd provide:
+DECLARE @desiredTimeStart DATETIME = '2023-09-02 19:00:00';
+DECLARE @desiredTimeEnd DATETIME = '2023-09-02 21:00:00';
+
+-- Query to find available tables:
+SELECT t.TableID, t.Capacity
+FROM Tables t
+LEFT JOIN Reservations r ON t.TableID = r.TableID
+AND (
+    (r.StartTime <= @desiredTimeStart AND r.EndTime > @desiredTimeStart) OR
+    (r.StartTime < @desiredTimeEnd AND r.EndTime >= @desiredTimeEnd) OR
+    (r.StartTime >= @desiredTimeStart AND r.EndTime <= @desiredTimeEnd)
+)
+WHERE r.TableID IS NULL;
+GO
