@@ -14,6 +14,41 @@ DROP TABLE IF EXISTS Logs;
 -- Drop the parent table
 DROP TABLE IF EXISTS UserTypes;
 GO
+
+USE project
+-- Check and drop the tr_Customers_Delete_Log trigger if it exists
+IF OBJECT_ID('tr_Customers_Insert_Log', 'TR') IS NOT NULL
+    DROP TRIGGER tr_Customers_Delete_Log;
+GO
+USE project
+-- Check and drop the tr_Reservations_Delete_Log trigger if it exists
+IF OBJECT_ID('tr_Reservations_Insert_Log', 'TR') IS NOT NULL
+    DROP TRIGGER tr_Reservations_Delete_Log;
+GO
+USE project
+-- Check and drop the tr_Orders_Delete_Log trigger if it exists
+IF OBJECT_ID('tr_Orders_Insert_Log', 'TR') IS NOT NULL
+    DROP TRIGGER tr_Orders_Delete_Log;
+GO
+USE project
+-- Check and drop the tr_Customers_Delete_Log trigger if it exists
+IF OBJECT_ID('tr_Customers_Delete_Log', 'TR') IS NOT NULL
+    DROP TRIGGER tr_Customers_Delete_Log;
+GO
+USE project
+-- Check and drop the tr_Reservations_Delete_Log trigger if it exists
+IF OBJECT_ID('tr_Reservations_Delete_Log', 'TR') IS NOT NULL
+    DROP TRIGGER tr_Reservations_Delete_Log;
+GO
+USE project
+-- Check and drop the tr_Orders_Delete_Log trigger if it exists
+IF OBJECT_ID('tr_Orders_Delete_Log', 'TR') IS NOT NULL
+    DROP TRIGGER tr_Orders_Delete_Log;
+GO
+
+
+
+
 USE project
 -- UserTypes
 CREATE TABLE UserTypes (
@@ -22,8 +57,9 @@ CREATE TABLE UserTypes (
 );
 
 INSERT INTO UserTypes (UserType) VALUES ('Manager'), ('Employee'), ('Customer');
+GO
 
-
+USE project
 -- Customers
 CREATE TABLE Customers (
    CustomerID INT PRIMARY KEY IDENTITY(1,1),
@@ -103,31 +139,95 @@ CREATE TABLE Logs (
 );
 GO
 
+CREATE TRIGGER tr_Customers_Insert_Log
+ON Customers
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO Logs (UserID, UserType, Action, Description)
+    SELECT 
+        i.CustomerID, 
+        'Customer', 
+        'Insert', 
+        'New customer ' + i.FirstName + ' ' + i.LastName + ' added.'
+    FROM INSERTED i;
+END;
+GO
+CREATE TRIGGER tr_Customers_Delete_Log
+ON Customers
+AFTER DELETE
+AS
+BEGIN
+    INSERT INTO Logs (UserID, UserType, Action, Description)
+    SELECT 
+        d.CustomerID, 
+        'Customer', 
+        'Delete', 
+        'Customer ' + d.FirstName + ' ' + d.LastName + ' deleted.'
+    FROM DELETED d;
+END;
+GO
 
--- use project
--- -- Employees
--- INSERT INTO Employees (FirstName, LastName, Email, PhoneNumber, HireDate, Salary, Password, UserTypeID) 
--- VALUES ('John', 'Doe', 'john.doe@email.com', '123-456-7890', '2022-01-10', 50000, 'hashed_password_123', 2),
---        ('Jane', 'Smith', 'jane.smith@email.com', '987-654-3210', '2021-12-01', 55000, 'hashed_password_456', 2);
 
--- -- Customers
--- INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address, Password, UserTypeID)
--- VALUES ('Alice', 'Johnson', 'alice.j@email.com', '111-222-3333', '123 Main St', 'hashed_password_789', 3),
---        ('Bob', 'Williams', 'bob.w@email.com', '444-555-6666', '456 Elm St', 'hashed_password_012', 3);
+CREATE TRIGGER tr_Reservations_Insert_Log
+ON Reservations
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO Logs (UserID, UserType, Action, Description)
+    SELECT 
+        i.CustomerID, 
+        'Customer', 
+        'Reservation', 
+        'New reservation for table ' + CAST(i.TableID AS NVARCHAR(10)) + ' at ' + CAST(i.ReservationTime AS NVARCHAR(50)) + '.'
+    FROM INSERTED i;
+END;
+GO
+CREATE TRIGGER tr_Reservations_Delete_Log
+ON Reservations
+AFTER DELETE
+AS
+BEGIN
+    INSERT INTO Logs (UserID, UserType, Action, Description)
+    SELECT 
+        d.CustomerID, 
+        'Customer', 
+        'Reservation Deletion', 
+        'Reservation for table ' + CAST(d.TableID AS NVARCHAR(10)) + ' at ' + CAST(d.ReservationTime AS NVARCHAR(50)) + ' deleted.'
+    FROM DELETED d;
+END;
+GO
 
--- -- Add 10 tables with capacities ranging from 2 to 6.
--- DECLARE @i INT = 1;
--- WHILE @i <= 10
--- BEGIN
---    INSERT INTO Tables (TableNumber, Capacity)
---    VALUES (@i, (RAND() * 4) + 2); -- Random capacity between 2 and 6
---    SET @i = @i + 1;
--- END;
 
--- INSERT INTO MenuItems (Name, Description, Price)
--- VALUES ('Spaghetti', 'Classic spaghetti with marinara sauce', 12.99),
---        ('Burger', 'Juicy beef burger with lettuce and tomato', 9.99),
---        ('Caesar Salad', 'Crispy romaine with creamy Caesar dressing', 7.99);
+
+CREATE TRIGGER tr_Orders_Insert_Log
+ON Orders
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO Logs (UserID, UserType, Action, Description)
+    SELECT 
+        i.CustomerID, 
+        'Customer', 
+        'Order', 
+        'New order placed with total price ' + CAST(i.TotalPrice AS NVARCHAR(10)) + '.'
+    FROM INSERTED i;
+END;
+GO
+CREATE TRIGGER tr_Orders_Delete_Log
+ON Orders
+AFTER DELETE
+AS
+BEGIN
+    INSERT INTO Logs (UserID, UserType, Action, Description)
+    SELECT 
+        d.CustomerID, 
+        'Customer', 
+        'Order Deletion', 
+        'Order with total price ' + CAST(d.TotalPrice AS NVARCHAR(10)) + ' deleted.'
+    FROM DELETED d;
+END;
+GO
 
 
 use project
