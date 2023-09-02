@@ -295,3 +295,42 @@ BEGIN
     SET @orderCounter = @orderCounter + 1;
 END;
 GO
+
+use project
+-- Retrieve the names of customers who have placed orders for a specific menu item
+SELECT c.FirstName, c.LastName
+FROM Customers c
+WHERE c.CustomerID IN (
+    SELECT o.CustomerID
+    FROM Orders o
+    WHERE o.OrderID IN (
+        SELECT od.OrderID
+        FROM OrderDetails od
+        WHERE od.MenuItemID IN (
+            SELECT mi.MenuItemID
+            FROM MenuItems mi
+            WHERE mi.Name = 'SpecificMenuItemName'  -- Replace with the actual menu item name
+        )
+    )
+);
+GO
+
+use project
+-- Retrieve the tables that were reserved by customers who have also placed an order with a total price greater than a specific value
+SELECT t.TableNumber, r.ReservationTime
+FROM Tables t
+JOIN Reservations r ON t.TableID = r.TableID
+WHERE r.CustomerID IN (
+    SELECT o.CustomerID
+    FROM Orders o
+    WHERE o.TotalPrice > 100  -- Example value
+    AND o.CustomerID IN (
+        SELECT c.CustomerID
+        FROM Customers c
+        WHERE c.CustomerID IN (
+            SELECT r.CustomerID
+            FROM Reservations r
+            JOIN Tables t ON r.TableID = t.TableID
+        )
+    )
+);
