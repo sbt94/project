@@ -1,0 +1,11 @@
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.csproj.AssemblyReference.cache
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.CostumerForm.resources
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.Form1.resources
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.NewEmployeeForm.resources
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.ReservationForm.resources
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.signupForm.resources
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.csproj.GenerateResource.cache
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.AssemblyInfoInputs.cache
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.AssemblyInfo.cs
+C:\Users\BAR YADGAR\Documents\GitHub\project\Sql_FinalProject\Sql_FinalProject\obj\Debug\net6.0-windows\Sql_FinalProject.csproj.CoreCompileInputs.cache
