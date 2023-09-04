@@ -10,16 +10,14 @@ using System.Windows.Forms;
 
 namespace Sql_FinalProject
 {
-    public partial class Order : Form
+    public partial class EmployyeOrMennagerForm : Form
     {
-        private string email;
-        public Order(string email)
+        public EmployyeOrMennagerForm(string role)
         {
             InitializeComponent();
-            this.email = email;
         }
 
-        private void Order_Load(object sender, EventArgs e)
+        private void EmployyeOrMennagerForm_Load(object sender, EventArgs e)
         {
 
         }

@@ -31,6 +31,13 @@ GO
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_AddMenuItem')
     DROP PROCEDURE sp_AddMenuItem;
 GO
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetReservationsByEmail')
+    DROP PROCEDURE sp_GetReservationsByEmail;
+GO
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetUpcomingReservations')
+    DROP PROCEDURE sp_GetUpcomingReservations;
+GO
+
 
 USE project
 -- Check and drop the tr_Customers_Delete_Log trigger if it exists
@@ -750,8 +757,40 @@ BEGIN
 END
 GO
 
+USE project
+GO
+--show all the future reservations or those that are still in progres 
+CREATE PROCEDURE sp_GetUpcomingReservations
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT * 
+    FROM Reservations
+    WHERE StartTime > GETDATE() OR EndTime > GETDATE();
+    
+    SET NOCOUNT OFF;
+END;
+GO
 
 
+USE project
+GO
+-- return all all the reservations of a costumer based on Email
+CREATE PROCEDURE sp_GetReservationsByEmail
+    @Email NVARCHAR(100)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    SELECT r.*
+    FROM Reservations r
+    INNER JOIN Customers c ON r.CustomerID = c.CustomerID
+    WHERE c.Email = @Email;
+
+    SET NOCOUNT OFF;
+END;
+GO
 
 
 
@@ -813,4 +852,13 @@ GO
 
 -- Grant execute permissions on sp_GetUserTypeByEmail to ManagerUser
 GRANT EXECUTE ON sp_GetUserTypeByEmail TO ManagerUser;
+GO
+
+-- Grant execute permissions on sp_GetReservationsByEmail
+GRANT EXECUTE ON sp_GetReservationsByEmail TO ManagerUser, EmployeeUser;
+GO
+
+
+-- Grant execute permissions on sp_GetUpcomingReservations
+GRANT EXECUTE ON sp_GetUpcomingReservations TO ManagerUser;
 GO

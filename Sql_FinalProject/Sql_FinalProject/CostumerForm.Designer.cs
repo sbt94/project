@@ -39,64 +39,73 @@
             // makeReservation
             // 
             makeReservation.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
-            makeReservation.Location = new Point(46, 113);
+            makeReservation.Location = new Point(40, 85);
+            makeReservation.Margin = new Padding(3, 2, 3, 2);
             makeReservation.Name = "makeReservation";
-            makeReservation.Size = new Size(281, 83);
+            makeReservation.Size = new Size(246, 62);
             makeReservation.TabIndex = 0;
             makeReservation.Text = "Make new reservation";
             makeReservation.UseVisualStyleBackColor = true;
+            makeReservation.Click += makeReservation_Click;
             // 
             // ShowReservation
             // 
             ShowReservation.Font = new Font("Segoe UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
-            ShowReservation.Location = new Point(52, 355);
+            ShowReservation.Location = new Point(46, 266);
+            ShowReservation.Margin = new Padding(3, 2, 3, 2);
             ShowReservation.Name = "ShowReservation";
-            ShowReservation.Size = new Size(281, 83);
+            ShowReservation.Size = new Size(246, 62);
             ShowReservation.TabIndex = 1;
             ShowReservation.Text = "show reservation";
             ShowReservation.UseVisualStyleBackColor = true;
+            ShowReservation.Click += ShowReservation_Click;
             // 
             // Hellow_lb
             // 
             Hellow_lb.AutoSize = true;
             Hellow_lb.Font = new Font("Segoe UI", 20F, FontStyle.Regular, GraphicsUnit.Point);
-            Hellow_lb.Location = new Point(242, 47);
+            Hellow_lb.Location = new Point(212, 35);
             Hellow_lb.Name = "Hellow_lb";
-            Hellow_lb.Size = new Size(343, 46);
+            Hellow_lb.Size = new Size(272, 37);
             Hellow_lb.TabIndex = 3;
             Hellow_lb.Text = "hellow dear costumer";
             // 
             // Grid_reservetions
             // 
             Grid_reservetions.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            Grid_reservetions.Location = new Point(445, 141);
+            Grid_reservetions.Location = new Point(389, 106);
+            Grid_reservetions.Margin = new Padding(3, 2, 3, 2);
             Grid_reservetions.Name = "Grid_reservetions";
             Grid_reservetions.RowHeadersWidth = 51;
-            Grid_reservetions.Size = new Size(299, 280);
+            Grid_reservetions.Size = new Size(262, 210);
             Grid_reservetions.TabIndex = 4;
             // 
             // Order_food_bt
             // 
             Order_food_bt.Font = new Font("Segoe UI", 17F, FontStyle.Regular, GraphicsUnit.Point);
-            Order_food_bt.Location = new Point(47, 215);
+            Order_food_bt.Location = new Point(41, 161);
+            Order_food_bt.Margin = new Padding(3, 2, 3, 2);
             Order_food_bt.Name = "Order_food_bt";
-            Order_food_bt.Size = new Size(286, 117);
+            Order_food_bt.Size = new Size(250, 88);
             Order_food_bt.TabIndex = 5;
             Order_food_bt.Text = "Order Food";
             Order_food_bt.UseVisualStyleBackColor = true;
+            Order_food_bt.Click += Order_food_bt_Click;
             // 
             // CostumerForm
             // 
-            AutoScaleDimensions = new SizeF(8F, 20F);
+            AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(700, 338);
             Controls.Add(Order_food_bt);
             Controls.Add(Grid_reservetions);
             Controls.Add(Hellow_lb);
             Controls.Add(ShowReservation);
             Controls.Add(makeReservation);
+            Margin = new Padding(3, 2, 3, 2);
             Name = "CostumerForm";
             Text = "CostumerForm";
+            Load += CostumerForm_Load;
             ((System.ComponentModel.ISupportInitialize)Grid_reservetions).EndInit();
             ResumeLayout(false);
             PerformLayout();

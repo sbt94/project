@@ -12,9 +12,17 @@ namespace Sql_FinalProject
 {
     public partial class ReservationForm : Form
     {
-        public ReservationForm()
+
+    private string email;
+        public ReservationForm(string email)
         {
             InitializeComponent();
+            this.email = email;
+        }
+
+        private void ReservationForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
