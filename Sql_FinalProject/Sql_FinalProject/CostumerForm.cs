@@ -19,7 +19,7 @@ namespace Sql_FinalProject
         {
             InitializeComponent();
             this.email = email;
-            connectionString = @"Data Source=DESKTOP-TQ2RPAH;Initial Catalog=FinalSQL;User ID=Customer;Password=54321";
+            connectionString = ConnectionClass.Customerconnection;
 
         }
 

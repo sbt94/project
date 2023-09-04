@@ -11,7 +11,7 @@ namespace Sql_FinalProject
         {
             InitializeComponent();
             //Data Source=DESKTOP-TQ2RPAH;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False
-            connectionString = @"Data Source=DESKTOP-TQ2RPAH;Initial Catalog=FinalSQL;Integrated Security=True";
+            connectionString = ConnectionClass.Generelconnection;
         }
 
         private void label1_Click(object sender, EventArgs e)
@@ -59,10 +59,10 @@ namespace Sql_FinalProject
                         // Get the output parameter value
                         string userType = (string)cmd.Parameters["@UserType"].Value;
 
-                        if (userType != "Not Found")
+                        if (userType == "Not Found")
                         {
                             // User type found, proceed with your logic
-                            MessageBox.Show($"User type is: {userType}");
+                            MessageBox.Show($"one or more of the parameters ar wrong");
                             Email_txt.Text = "";
                             Pass_txt.Text = "";
                         }
@@ -71,12 +71,14 @@ namespace Sql_FinalProject
                             new EmployyeOrMennagerForm(userType).Show();
                             // User type found, proceed with your logic
                             MessageBox.Show($"User type is: {userType}");
+                            new EmployyeOrMennagerForm(userType).Show();
                         }
                         else if (userType == "Customer")
                         {
                             new CostumerForm(email).Show();
                             // User type found, proceed with your logic
                             MessageBox.Show($"User type is: {userType}");
+                            
                         }
                         else
                         {

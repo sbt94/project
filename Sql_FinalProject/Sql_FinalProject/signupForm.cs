@@ -70,5 +70,10 @@ namespace Sql_FinalProject
         {
 
         }
+
+        private void signupForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
