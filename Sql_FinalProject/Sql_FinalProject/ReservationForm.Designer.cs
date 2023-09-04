@@ -47,6 +47,7 @@
             sumbmit_BT.TabIndex = 0;
             sumbmit_BT.Text = "Submit Order";
             sumbmit_BT.UseVisualStyleBackColor = true;
+            sumbmit_BT.Click += sumbmit_BT_Click;
             // 
             // Date_hours
             // 

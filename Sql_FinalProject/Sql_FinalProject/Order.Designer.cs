@@ -32,7 +32,7 @@
             label1 = new Label();
             Total_Amount_lb = new Label();
             Add_item_bt = new Button();
-            Check_bt = new Button();
+            check = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
@@ -78,24 +78,26 @@
             Add_item_bt.TabIndex = 3;
             Add_item_bt.Text = "Order new dish";
             Add_item_bt.UseVisualStyleBackColor = true;
+            Add_item_bt.Click += Add_item_bt_Click;
             // 
-            // Check_bt
+            // check
             // 
-            Check_bt.Font = new Font("Segoe UI", 16F, FontStyle.Regular, GraphicsUnit.Point);
-            Check_bt.Location = new Point(346, 254);
-            Check_bt.Margin = new Padding(3, 2, 3, 2);
-            Check_bt.Name = "Check_bt";
-            Check_bt.Size = new Size(293, 67);
-            Check_bt.TabIndex = 4;
-            Check_bt.Text = "button1";
-            Check_bt.UseVisualStyleBackColor = true;
+            check.Font = new Font("Segoe UI", 16F, FontStyle.Regular, GraphicsUnit.Point);
+            check.Location = new Point(346, 254);
+            check.Margin = new Padding(3, 2, 3, 2);
+            check.Name = "check";
+            check.Size = new Size(293, 67);
+            check.TabIndex = 4;
+            check.Text = "Check";
+            check.UseVisualStyleBackColor = true;
+            check.Click += Add_bt_Click;
             // 
             // Order
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(700, 338);
-            Controls.Add(Check_bt);
+            Controls.Add(check);
             Controls.Add(Add_item_bt);
             Controls.Add(Total_Amount_lb);
             Controls.Add(label1);
@@ -115,6 +117,6 @@
         private Label label1;
         private Label Total_Amount_lb;
         private Button Add_item_bt;
-        private Button Check_bt;
+        private Button check;
     }
 }

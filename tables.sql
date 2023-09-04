@@ -407,7 +407,9 @@ INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address, Passwor
 -- Insert data for Reservations
 INSERT INTO Reservations (CustomerID, TableID, StartTime) VALUES 
 (1, 1, '2023-09-10 19:00:00'),   -- Note: Using TableID (1 for 101, 2 for 102, 3 for 103)
-(2, 3, '2023-09-11 20:00:00');
+(2, 3, '2023-09-11 20:00:00'),
+(101, 1, '2023-12-10 19:00:00'),   -- Note: Using TableID (1 for 101, 2 for 102, 3 for 103)
+(101, 3, '2023-11-11 20:00:00');
 
 -- Insert data for Orders
 INSERT INTO Orders (CustomerID, TotalPrice)
