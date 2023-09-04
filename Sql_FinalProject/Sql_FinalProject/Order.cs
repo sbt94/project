@@ -39,6 +39,7 @@ namespace Sql_FinalProject
                         // Add input parameter for email
                         cmd.Parameters.Add(new SqlParameter("@Email", email));
 
+
                         // Add output parameter for NewOrderID
                         SqlParameter newOrderIDParam = new SqlParameter("@NewOrderID", SqlDbType.Int);
                         newOrderIDParam.Direction = ParameterDirection.Output;

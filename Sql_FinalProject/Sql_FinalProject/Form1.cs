@@ -27,6 +27,7 @@ namespace Sql_FinalProject
 
         private void login_bt_Click(object sender, EventArgs e)
         {
+            //MessageBox.Show("login button clicked");
             var email = Email_txt.Text;
             var password = Pass_txt.Text; // Note: You should handle passwords securely, this is just for demonstration
 
@@ -40,7 +41,7 @@ namespace Sql_FinalProject
                     connection.Open();
 
                     // Create a command for the stored procedure
-                    using (SqlCommand cmd = new SqlCommand("sp_GetUserTypeByEmail", connection))
+                    using (SqlCommand cmd = new SqlCommand("sp_LoginUser", connection))
                     {
                         cmd.CommandType = CommandType.StoredProcedure;
 
@@ -68,6 +69,10 @@ namespace Sql_FinalProject
                         }
                         else if (userType == "Manager" || userType == "Employee")
                         {
+                            CurrentUser.username = email;
+                            CurrentUser.password = password;
+                            CurrentUser.usertype = userType;
+
                             new EmployyeOrMennagerForm(userType).Show();
                             // User type found, proceed with your logic
                             MessageBox.Show($"User type is: {userType}");
@@ -75,6 +80,10 @@ namespace Sql_FinalProject
                         }
                         else if (userType == "Customer")
                         {
+                            CurrentUser.username = email;
+                            CurrentUser.password = password;
+                            CurrentUser.usertype = userType;
+
                             new CostumerForm(email).Show();
                             // User type found, proceed with your logic
                             MessageBox.Show($"User type is: {userType}");

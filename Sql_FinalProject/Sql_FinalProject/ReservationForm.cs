@@ -31,9 +31,17 @@ namespace Sql_FinalProject
 
         private void sumbmit_BT_Click(object sender, EventArgs e)
         {
-            int quantity = int.Parse(pepole_amount_txt.Text);
+            int quantity;
+            try
+            {
+                quantity = int.Parse(pepole_amount_txt.Text);
+            } catch
+            {
+                   MessageBox.Show("Please enter a valid number of people");
+                return;
+            }
             DateTime date = DateTime.Parse(Date_date.Text + " " + Date_hours.Text);
-
+     
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 try
@@ -73,6 +81,11 @@ namespace Sql_FinalProject
                 }
 
             }
+        }
+
+        private void Num_pp_lb_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

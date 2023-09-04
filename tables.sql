@@ -759,6 +759,7 @@ BEGIN
 END
 GO
 
+
 USE project
 GO
 --show all the future reservations or those that are still in progres 
@@ -792,6 +793,39 @@ BEGIN
 
     SET NOCOUNT OFF;
 END;
+GO
+
+use project
+GO
+CREATE PROCEDURE sp_LoginUser
+    @Email NVARCHAR(100),
+    @Password NVARCHAR(255),
+    @UserType NVARCHAR(50) OUTPUT
+AS
+BEGIN
+    SET @UserType = NULL
+
+    -- Check in Customers table
+    SELECT @UserType = UT.UserType
+    FROM Customers C
+    INNER JOIN UserTypes UT ON C.UserTypeID = UT.UserTypeID
+    WHERE C.Email = @Email AND C.Password = @Password
+
+    -- If not found in Customers, check in Employees table
+    IF @UserType IS NULL
+    BEGIN
+        SELECT @UserType = UT.UserType
+        FROM Employees E
+        INNER JOIN UserTypes UT ON E.UserTypeID = UT.UserTypeID
+        WHERE E.Email = @Email AND E.Password = @Password
+    END
+
+    -- If still not found, set UserType to 'Not Found'
+    IF @UserType IS NULL
+    BEGIN
+        SET @UserType = 'Not Found'
+    END
+END
 GO
 
 
