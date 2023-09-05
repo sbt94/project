@@ -76,10 +76,12 @@ namespace Sql_FinalProject
 
         private void Add_bt_Click(object sender, EventArgs e)
         {
+            MessageBox.Show("the balnca was drawed from your balnce.");
+            this.Close();
 
         }
 
-        
+
         private void Timer_Tick(object sender, EventArgs e)
         {
             // Check if DishForm is closed

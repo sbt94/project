@@ -40,6 +40,7 @@
             Phone_txt = new TextBox();
             Address_txt = new TextBox();
             Password_txt = new TextBox();
+            button1 = new Button();
             SuspendLayout();
             // 
             // label1
@@ -151,11 +152,23 @@
             Password_txt.Size = new Size(266, 23);
             Password_txt.TabIndex = 11;
             // 
+            // button1
+            // 
+            button1.Font = new Font("Segoe UI", 20F, FontStyle.Regular, GraphicsUnit.Point);
+            button1.Location = new Point(199, 470);
+            button1.Name = "button1";
+            button1.Size = new Size(344, 52);
+            button1.TabIndex = 12;
+            button1.Text = "submit";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
             // signupForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(700, 490);
+            ClientSize = new Size(700, 550);
+            Controls.Add(button1);
             Controls.Add(Password_txt);
             Controls.Add(Address_txt);
             Controls.Add(Phone_txt);
@@ -190,5 +203,6 @@
         private TextBox Phone_txt;
         private TextBox Address_txt;
         private TextBox Password_txt;
+        private Button button1;
     }
 }
