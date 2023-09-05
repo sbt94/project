@@ -1,4 +1,4 @@
-USE project
+USE FinalSQL
 -- Drop child tables (those having foreign keys)
 DROP TABLE IF EXISTS OrderProduct;
 DROP TABLE IF EXISTS Orders;
@@ -14,7 +14,7 @@ DROP TABLE IF EXISTS Logs;
 -- Drop the parent table
 DROP TABLE IF EXISTS UserTypes;
 
-USE project
+USE FinalSQL
 
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetUserTypeByEmail')
     DROP PROCEDURE sp_GetUserTypeByEmail;
@@ -31,6 +31,7 @@ GO
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_AddMenuItem')
     DROP PROCEDURE sp_AddMenuItem;
 GO
+
 IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetReservationsByEmail')
     DROP PROCEDURE sp_GetReservationsByEmail;
 GO
@@ -38,33 +39,50 @@ IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetUpcoming
     DROP PROCEDURE sp_GetUpcomingReservations;
 GO
 
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_CreateNewOrder')
+    DROP PROCEDURE sp_CreateNewOrder;
+GO
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_InsertOrderProduct')
+    DROP PROCEDURE sp_InsertOrderProduct;
+GO
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetAllMenuItems')
+    DROP PROCEDURE sp_GetAllMenuItems;
+GO
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetOrderDetails')
+    DROP PROCEDURE sp_GetOrderDetails;
+GO
+IF EXISTS (SELECT * FROM sys.objects WHERE type = 'P' AND name = 'sp_GetTotalPriceByOrderID')
+    DROP PROCEDURE sp_GetTotalPriceByOrderID;
+GO
 
-USE project
+
+
+USE FinalSQL
 -- Check and drop the tr_Customers_Delete_Log trigger if it exists
 IF OBJECT_ID('tr_Customers_Insert_Log', 'TR') IS NOT NULL
     DROP TRIGGER tr_Customers_Delete_Log;
 GO
-USE project
+USE FinalSQL
 -- Check and drop the tr_Reservations_Delete_Log trigger if it exists
 IF OBJECT_ID('tr_Reservations_Insert_Log', 'TR') IS NOT NULL
     DROP TRIGGER tr_Reservations_Delete_Log;
 GO
-USE project
+USE FinalSQL
 -- Check and drop the tr_Orders_Delete_Log trigger if it exists
 IF OBJECT_ID('tr_Orders_Insert_Log', 'TR') IS NOT NULL
     DROP TRIGGER tr_Orders_Delete_Log;
 GO
-USE project
+USE FinalSQL
 -- Check and drop the tr_Customers_Delete_Log trigger if it exists
 IF OBJECT_ID('tr_Customers_Delete_Log', 'TR') IS NOT NULL
     DROP TRIGGER tr_Customers_Delete_Log;
 GO
-USE project
+USE FinalSQL
 -- Check and drop the tr_Reservations_Delete_Log trigger if it exists
 IF OBJECT_ID('tr_Reservations_Delete_Log', 'TR') IS NOT NULL
     DROP TRIGGER tr_Reservations_Delete_Log;
 GO
-USE project
+USE FinalSQL
 -- Check and drop the tr_Orders_Delete_Log trigger if it exists
 IF OBJECT_ID('tr_Orders_Delete_Log', 'TR') IS NOT NULL
     DROP TRIGGER tr_Orders_Delete_Log;
@@ -75,7 +93,7 @@ GO
 --------------------------------------------------------------------------------------------   
 
 
-USE project
+USE FinalSQL
 -- UserTypes
 CREATE TABLE UserTypes (
    UserTypeID INT PRIMARY KEY IDENTITY(1,1),
@@ -85,7 +103,7 @@ CREATE TABLE UserTypes (
 INSERT INTO UserTypes (UserType) VALUES ('Manager'), ('Employee'), ('Customer'); -- only manager can add new employee
 GO
 
-USE project
+USE FinalSQL
 -- Customers
 CREATE TABLE Customers (
    CustomerID INT PRIMARY KEY IDENTITY(1,1),
@@ -135,7 +153,7 @@ CREATE TABLE Reservations (
    EndTime DATETIME
 );
 
-use project
+use FinalSQL
 -- Orders
 CREATE TABLE Orders (
     OrderID INT PRIMARY KEY IDENTITY(1,1),
@@ -319,7 +337,7 @@ GO
 --------------------------------------insert data------------------------------------------
 --------------------------------------------------------------------------------------------
 
-use project
+use FinalSQL
 DECLARE @counter INT = 1;
 WHILE @counter <= 100
 BEGIN
@@ -355,7 +373,7 @@ BEGIN
     SET @dish = @dish + 1;
 END;
 
-use project
+use FinalSQL
 DECLARE @orderCounter INT = 1;
 WHILE @orderCounter <= 100 -- Assuming 100 customers
 BEGIN
@@ -384,7 +402,7 @@ BEGIN
 END;
 GO
 
-USE project
+USE FinalSQL
 
 -- Insert data for MenuItems
 INSERT INTO MenuItems (Name, Description, Price) VALUES 
@@ -436,7 +454,7 @@ VALUES (3, 7, 1),
        (3, 10, 1);
 GO
 
-use project
+use FinalSQL
 -- Retrieve the tables that were reserved by customers who have also placed an order with a total price greater than a specific value
 SELECT t.TableNumber, r.StartTime
 FROM Tables t
@@ -462,7 +480,7 @@ WHERE r.CustomerID IN (
 ----------------------------------------------------------------
 
 --create a new customer    if the cretion sucseed it will retuen 1 
-USE project
+USE FinalSQL
 GO
 CREATE PROCEDURE sp_CreateNewUser
     @FirstName NVARCHAR(50),
@@ -504,7 +522,7 @@ GO
 
 
 --create a new employee
-USE project
+USE FinalSQL
 GO
 
 CREATE PROCEDURE sp_CreateNewEmployee
@@ -553,7 +571,7 @@ GO
 
 
 -- add new order
-USE project
+USE FinalSQL
 GO
 
 CREATE PROCEDURE sp_InsertOrderWithProducts
@@ -612,7 +630,7 @@ END;
 GO
 
 
-USE project;
+USE FinalSQL;
 GO
 
 CREATE PROCEDURE sp_AddMenuItem
@@ -654,7 +672,7 @@ EXEC sp_AddMenuItem @Name='Cheeseburger', @Description='Delicious burger with ch
 
 --find available tables
 -- we use transaction to make sure that the table will be available when the customer make the reservation
-USE project
+USE FinalSQL
 GO
 CREATE PROCEDURE sp_MakeReservation
     @CustomerEmail NVARCHAR(100),
@@ -734,11 +752,12 @@ GO
 
 
 --create a function that look for the accses lvl and return the the user type
-USE project
+USE FinalSQL
 GO
 
 CREATE PROCEDURE sp_GetUserTypeByEmail
     @Email NVARCHAR(100),
+	@Password NVARCHAR(100),
     @UserType NVARCHAR(50) OUTPUT
 AS
 BEGIN
@@ -749,7 +768,7 @@ BEGIN
     SELECT @UserType = UT.UserType
     FROM Customers C
     INNER JOIN UserTypes UT ON C.UserTypeID = UT.UserTypeID
-    WHERE C.Email = @Email
+    WHERE C.Email = @Email and C.Password= @Password
 
     -- If no user is found with the given email, set UserType to 'Not Found'
     IF @UserType IS NULL
@@ -759,7 +778,7 @@ BEGIN
 END
 GO
 
-USE project
+USE FinalSQL
 GO
 --show all the future reservations or those that are still in progres 
 CREATE PROCEDURE sp_GetUpcomingReservations
@@ -776,7 +795,7 @@ END;
 GO
 
 
-USE project
+USE FinalSQL
 GO
 -- return all all the reservations of a costumer based on Email
 CREATE PROCEDURE sp_GetReservationsByEmail
@@ -794,6 +813,148 @@ BEGIN
 END;
 GO
 
+USE FinalSQL
+GO
+
+CREATE PROCEDURE sp_InsertOrderProduct
+    @OrderID INT,
+    @MenuItemID INT,
+    @Quantity INT
+AS
+BEGIN
+    SET NOCOUNT ON;  -- Suppress the count of affected rows
+
+    BEGIN TRANSACTION;  -- Start a new transaction
+
+    BEGIN TRY
+        -- Insert the order details into the OrderProduct table
+        INSERT INTO OrderProduct (OrderID, MenuItemID, Quantity)
+        VALUES (@OrderID, @MenuItemID, @Quantity);
+
+        -- Commit the transaction
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        -- An error occurred, rollback the transaction
+        ROLLBACK;
+
+    END CATCH;
+END;
+GO
+
+USE FinalSQL
+GO
+
+CREATE PROCEDURE sp_CreateNewOrder
+    @Email NVARCHAR(100),
+    @NewOrderID INT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;  -- Suppress the count of affected rows
+
+    BEGIN TRANSACTION;  -- Start a new transaction
+
+    BEGIN TRY
+        -- Declare a variable to hold the CustomerID
+        DECLARE @CustomerID INT;
+
+        -- Get the CustomerID based on the email
+        SELECT @CustomerID = CustomerID FROM Customers WHERE Email = @Email;
+
+        -- Check if the customer exists
+        IF @CustomerID IS NULL
+        BEGIN
+            ROLLBACK;  -- Rollback the transaction
+            SET @NewOrderID = 0;  -- Indicate that the customer was not found
+            RETURN;
+        END
+
+        -- Create a new order for the customer
+        INSERT INTO Orders (CustomerID)
+        VALUES (@CustomerID);
+
+        -- Get the ID of the newly created order
+        SET @NewOrderID = SCOPE_IDENTITY();
+
+        -- Commit the transaction
+        COMMIT;
+    END TRY
+    BEGIN CATCH
+        -- An error occurred, rollback the transaction
+        ROLLBACK;
+
+        -- Set @NewOrderID to indicate an error
+        SET @NewOrderID = 0;
+
+        
+    END CATCH;
+END;
+GO
+
+USE FinalSQL
+GO
+
+CREATE PROCEDURE sp_GetAllMenuItems
+AS
+BEGIN
+    SET NOCOUNT ON;  -- Suppress the count of affected rows
+
+    -- Select all rows from the MenuItems table
+    SELECT * FROM MenuItems;
+END;
+GO
+
+USE FinalSQL
+GO
+
+CREATE PROCEDURE sp_GetOrderDetails
+    @OrderID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Join the OrderProduct table with the MenuItems table to get details
+    SELECT 
+        O.OrderID,
+        M.MenuItemID,
+        M.Name AS MenuItemName,
+        M.Description AS MenuItemDescription,
+        M.Price AS MenuItemPrice,
+        O.Quantity
+    FROM 
+        OrderProduct O
+    INNER JOIN 
+        MenuItems M ON O.MenuItemID = M.MenuItemID
+    WHERE 
+        O.OrderID = @OrderID;
+END;
+GO
+
+USE FinalSQL
+GO
+
+CREATE PROCEDURE sp_GetTotalPriceByOrderID
+    @OrderID INT,
+    @TotalPrice FLOAT OUTPUT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Initialize the output parameter
+    SET @TotalPrice = 0.0
+
+    -- Get the total price based on the order ID
+    SELECT @TotalPrice = TotalPrice
+    FROM Orders
+    WHERE OrderID = @OrderID
+
+    -- If no order is found with the given order ID, set TotalPrice to NULL
+    IF @TotalPrice IS NULL
+    BEGIN
+        SET @TotalPrice = NULL
+    END
+END
+GO
 
 
 ----------------------------------------------------------------
@@ -813,7 +974,7 @@ CREATE LOGIN Customer WITH PASSWORD = '54321';
 GO
 
 
-USE project;
+USE FinalSQL;
 GO
 
 -- Create a database user for Manager and associate it with the login
@@ -830,7 +991,7 @@ GO
 
 
 -- Grant SELECT permission on the Customers table to the CustomerUser
-USE project;
+USE FinalSQL;
 GO
 
 -- Grant execute permissions on sp_InsertOrderWithProducts
@@ -849,7 +1010,7 @@ GO
 -- Grant execute permissions on sp_CreateNewEmployee
 GRANT EXECUTE ON sp_CreateNewEmployee TO ManagerUser;
 
-USE project;
+USE FinalSQL;
 GO
 
 -- Grant execute permissions on sp_GetUserTypeByEmail to ManagerUser
@@ -857,10 +1018,28 @@ GRANT EXECUTE ON sp_GetUserTypeByEmail TO ManagerUser;
 GO
 
 -- Grant execute permissions on sp_GetReservationsByEmail
-GRANT EXECUTE ON sp_GetReservationsByEmail TO ManagerUser, EmployeeUser;
+GRANT EXECUTE ON sp_GetReservationsByEmail TO ManagerUser, EmployeeUser,CustomerUser;
 GO
 
 
 -- Grant execute permissions on sp_GetUpcomingReservations
 GRANT EXECUTE ON sp_GetUpcomingReservations TO ManagerUser;
 GO
+
+-- Grant execute permissions on sp_InsertOrderProduct
+GRANT EXECUTE ON sp_InsertOrderProduct TO CustomerUser;
+GO
+
+-- Grant execute permissions on sp_CreateNewOrder
+GRANT EXECUTE ON sp_CreateNewOrder TO CustomerUser;
+GO
+
+GRANT EXECUTE ON sp_GetAllMenuItems TO CustomerUser;
+GO
+
+GRANT EXECUTE ON sp_GetOrderDetails TO CustomerUser;
+GO
+
+GRANT EXECUTE ON sp_GetTotalPriceByOrderID TO CustomerUser;
+GO
+
