@@ -64,6 +64,7 @@ namespace Sql_FinalProject
 
                         // Print the output message
                         MessageBox.Show(outputMessage);
+                        this.Close();
                     }
                 }
                 catch (Exception ex)
