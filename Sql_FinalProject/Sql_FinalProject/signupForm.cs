@@ -80,13 +80,14 @@ namespace Sql_FinalProject
 
         private void button1_Click(object sender, EventArgs e)
         {
+            int outPutVariable = 0;
             string name = Name_txt.Text;
             string surname = Surname_txt.Text;
             string email = Email_txt.Text;
             string phone = Phone_txt.Text;
             string address = Address_txt.Text;
             string password = Password_txt.Text;
-            int userType = 1; // Assuming userType is 1 for this example
+            int userType = 3; // Assuming userType is 1 for this example
 
             using (SqlConnection connection = new SqlConnection(connectionstring))
             {
@@ -109,13 +110,28 @@ namespace Sql_FinalProject
                         cmd.Parameters.Add(new SqlParameter("@Password", password));
                         cmd.Parameters.Add(new SqlParameter("@UserTypeID", userType));
 
-                        // Execute the stored procedure and get the return value
-                        int returnValue = (int)cmd.ExecuteScalar();
+                        // Add output parameter for NewOrderID
+                        SqlParameter outvar = new SqlParameter("@outvar", SqlDbType.Int);
+                        outvar.Direction = ParameterDirection.Output;
+                        cmd.Parameters.Add(outvar);
 
-                        if (returnValue == 1)
+
+
+                        cmd.ExecuteNonQuery();
+
+                        if (outvar.Value != DBNull.Value)
                         {
-                            MessageBox.Show("User created successfully.");
-                            this.Close();  
+                            outPutVariable = Convert.ToInt32(outvar.Value);
+                            if (outPutVariable == 1)
+                            {
+                                MessageBox.Show("User created successfully.");
+                                this.Close();
+                            }
+                            else
+                            {
+                                MessageBox.Show("Failed to create user. Email might already exist.");
+                            }
+
                         }
                         else
                         {

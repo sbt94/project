@@ -71,14 +71,13 @@ namespace Sql_FinalProject
                             new EmployyeOrMennagerForm(userType).Show();
                             // User type found, proceed with your logic
                             MessageBox.Show($"User type is: {userType}");
-                            new EmployyeOrMennagerForm(userType).Show();
                         }
                         else if (userType == "Customer")
                         {
                             new CostumerForm(email).Show();
                             // User type found, proceed with your logic
                             MessageBox.Show($"User type is: {userType}");
-                            
+
                         }
                         else
                         {
@@ -96,6 +95,11 @@ namespace Sql_FinalProject
         }
 
         private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Pass_txt_TextChanged(object sender, EventArgs e)
         {
 
         }
