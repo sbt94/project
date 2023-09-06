@@ -88,7 +88,7 @@
             Email_txt.Name = "Email_txt";
             Email_txt.Size = new Size(110, 23);
             Email_txt.TabIndex = 4;
-            Email_txt.Text = "john@example.com";
+            Email_txt.Text = "jane@example.com";
             // 
             // Pass_txt
             // 
@@ -97,7 +97,8 @@
             Pass_txt.Name = "Pass_txt";
             Pass_txt.Size = new Size(110, 23);
             Pass_txt.TabIndex = 5;
-            Pass_txt.Text = "pass123";
+            Pass_txt.Text = "pass456";
+            Pass_txt.TextChanged += Pass_txt_TextChanged;
             // 
             // Form1
             // 

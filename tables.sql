@@ -489,16 +489,18 @@ CREATE PROCEDURE sp_CreateNewUser
     @PhoneNumber NVARCHAR(20),
     @Address NVARCHAR(250),
     @Password NVARCHAR(255),
-    @UserTypeID INT
+    @UserTypeID INT,
+	@outvar INT OUTPUT
 AS
 BEGIN
+	set @outvar=0;
     BEGIN TRANSACTION;  -- Start the transaction
     BEGIN TRY
         -- Check if the email already exists
         IF EXISTS (SELECT 1 FROM Customers WHERE Email = @Email)
         BEGIN
             ROLLBACK;
-            RETURN 0;  -- Email already exists
+            RETURN @outvar;  -- Email already exists
         END
 
         -- Insert the new user
@@ -509,11 +511,13 @@ BEGIN
         COMMIT;
         
         -- Return success
-        RETURN 1;
+		set @outvar=1;
+        RETURN @outvar;
     END TRY
     BEGIN CATCH
         ROLLBACK;  -- Rollback the transaction if there's an error
-        RETURN 0;
+       set @outvar =0;
+	   RETURN @outvar;
     END CATCH;
 END;
 GO
@@ -533,7 +537,9 @@ CREATE PROCEDURE sp_CreateNewEmployee
     @HireDate DATE,
     @Salary FLOAT,
     @Password NVARCHAR(255),
-    @UserTypeID INT
+    @UserTypeID INT,
+	@outvar INT OUTPUT
+
 AS
 BEGIN
 -- we use transaction to make sure that the employee will be added only if the email is not exist
@@ -543,7 +549,8 @@ BEGIN
         IF EXISTS (SELECT 1 FROM Employees WHERE Email = @Email)
         BEGIN
             ROLLBACK;
-            RETURN 0;  -- Email already exists
+            set @outvar =0;
+			RETURN @outvar; -- Email already exists
         END
 
         -- Insert the new employee
@@ -554,12 +561,12 @@ BEGIN
         COMMIT;
         
         -- Return success
-        RETURN 1;
-    END TRY
+		set @outvar =1;
+	   RETURN @outvar;    END TRY
     BEGIN CATCH
         ROLLBACK;  -- Rollback the transaction if there's an error
-        RETURN 0;
-    END CATCH;
+		set @outvar =0;
+	   RETURN @outvar;    END CATCH;
 END;
 GO
 
@@ -1014,7 +1021,7 @@ USE FinalSQL;
 GO
 
 -- Grant execute permissions on sp_GetUserTypeByEmail to ManagerUser
-GRANT EXECUTE ON sp_GetUserTypeByEmail TO ManagerUser;
+GRANT EXECUTE ON sp_GetUserTypeByEmail TO ManagerUser,EmployeeUser;
 GO
 
 -- Grant execute permissions on sp_GetReservationsByEmail
@@ -1023,7 +1030,7 @@ GO
 
 
 -- Grant execute permissions on sp_GetUpcomingReservations
-GRANT EXECUTE ON sp_GetUpcomingReservations TO ManagerUser;
+GRANT EXECUTE ON sp_GetUpcomingReservations TO ManagerUser,EmployeeUser;
 GO
 
 -- Grant execute permissions on sp_InsertOrderProduct
@@ -1042,4 +1049,3 @@ GO
 
 GRANT EXECUTE ON sp_GetTotalPriceByOrderID TO CustomerUser;
 GO
-
