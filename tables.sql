@@ -88,6 +88,10 @@ IF OBJECT_ID('tr_Orders_Delete_Log', 'TR') IS NOT NULL
     DROP TRIGGER tr_Orders_Delete_Log;
 GO
 
+IF EXISTS (SELECT * FROM sys.views WHERE name = 'AllUserEmails')
+DROP VIEW AllUserEmails;
+GO
+
 --------------------------------------------------------------------------------------------   
 --------------------------------------create tables-----------------------------------------
 --------------------------------------------------------------------------------------------   
@@ -480,8 +484,17 @@ WHERE r.CustomerID IN (
 ----------------------------------------------------------------
 
 --create a new customer    if the cretion sucseed it will retuen 1 
+
 USE FinalSQL
 GO
+-- Create the view
+CREATE VIEW AllUserEmails AS
+SELECT Email FROM Customers
+UNION 
+SELECT Email FROM Employees
+-- Add more tables if necessary
+GO
+
 CREATE PROCEDURE sp_CreateNewUser
     @FirstName NVARCHAR(50),
     @LastName NVARCHAR(50),
@@ -494,12 +507,22 @@ CREATE PROCEDURE sp_CreateNewUser
 AS
 BEGIN
 	set @outvar=0;
+    
+    -- Create a temporary table for emails being checked (for demonstration purposes)
+    CREATE TABLE #CheckedEmails
+    (
+        Email NVARCHAR(100)
+    );
+
+    INSERT INTO #CheckedEmails VALUES (@Email);
+
     BEGIN TRANSACTION;  -- Start the transaction
     BEGIN TRY
-        -- Check if the email already exists
-        IF EXISTS (SELECT 1 FROM Customers WHERE Email = @Email)
+        -- Check if the email already exists using the view
+        IF EXISTS (SELECT 1 FROM AllUserEmails WHERE Email = @Email)
         BEGIN
             ROLLBACK;
+            DROP TABLE #CheckedEmails;  -- Cleanup temp table
             RETURN @outvar;  -- Email already exists
         END
 
@@ -512,15 +535,73 @@ BEGIN
         
         -- Return success
 		set @outvar=1;
+        DROP TABLE #CheckedEmails;  -- Cleanup temp table
         RETURN @outvar;
     END TRY
     BEGIN CATCH
         ROLLBACK;  -- Rollback the transaction if there's an error
+        DROP TABLE #CheckedEmails;  -- Cleanup temp table
        set @outvar =0;
 	   RETURN @outvar;
     END CATCH;
 END;
 GO
+
+
+
+
+
+
+
+
+
+--create a new customer    if the cretion sucseed it will retuen 1 
+-- USE FinalSQL
+-- GO
+-- CREATE PROCEDURE sp_CreateNewUser
+--     @FirstName NVARCHAR(50),
+--     @LastName NVARCHAR(50),
+--     @Email NVARCHAR(100),
+--     @PhoneNumber NVARCHAR(20),
+--     @Address NVARCHAR(250),
+--     @Password NVARCHAR(255),
+--     @UserTypeID INT,
+-- 	@outvar INT OUTPUT
+-- AS
+-- BEGIN
+-- 	set @outvar=0;
+--     BEGIN TRANSACTION;  -- Start the transaction
+--     BEGIN TRY
+--         -- Check if the email already exists
+--         IF EXISTS (SELECT 1 FROM Customers WHERE Email = @Email)
+--         BEGIN
+--             ROLLBACK;
+--             RETURN @outvar;  -- Email already exists
+--         END
+--         IF EXISTS (SELECT 1 FROM Employees WHERE Email = @Email)
+--         BEGIN
+--             ROLLBACK;
+--             RETURN @outvar;  -- Email already exists
+--         END
+
+--         -- Insert the new user
+--         INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address, Password, UserTypeID)
+--         VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @Address, @Password, @UserTypeID)
+
+--         -- Commit the transaction if successful
+--         COMMIT;
+        
+--         -- Return success
+-- 		set @outvar=1;
+--         RETURN @outvar;
+--     END TRY
+--     BEGIN CATCH
+--         ROLLBACK;  -- Rollback the transaction if there's an error
+--        set @outvar =0;
+-- 	   RETURN @outvar;
+--     END CATCH;
+-- END;
+-- GO
 
 
 
@@ -552,8 +633,15 @@ BEGIN
             set @outvar =0;
 			RETURN @outvar; -- Email already exists
         END
-
+        
+        IF EXISTS (SELECT 1 FROM Employees WHERE Email = @Email)
+        BEGIN
+            ROLLBACK;
+            set @outvar =0;
+            RETURN @outvar; -- Email already exists
+        END
         -- Insert the new employee
+
         INSERT INTO Employees (FirstName, LastName, Email, PhoneNumber, HireDate, Salary, Password, UserTypeID)
         VALUES (@FirstName, @LastName, @Email, @PhoneNumber, @HireDate, @Salary, @Password, @UserTypeID)
 
@@ -862,39 +950,36 @@ BEGIN
     BEGIN TRANSACTION;  -- Start a new transaction
 
     BEGIN TRY
-        -- Declare a variable to hold the CustomerID
-        DECLARE @CustomerID INT;
+    -- Declare a variable to hold the CustomerID
+    DECLARE @CustomerID INT;
 
-        -- Get the CustomerID based on the email
-        SELECT @CustomerID = CustomerID FROM Customers WHERE Email = @Email;
+    -- Get the CustomerID based on the email
+    SELECT @CustomerID = CustomerID FROM Customers WHERE Email = @Email;
 
-        -- Check if the customer exists
-        IF @CustomerID IS NULL
-        BEGIN
-            ROLLBACK;  -- Rollback the transaction
-            SET @NewOrderID = 0;  -- Indicate that the customer was not found
-            RETURN;
-        END
+    -- Check if the customer exists
+    IF @CustomerID IS NULL
+    BEGIN
+        ROLLBACK;  -- Rollback the transaction
+        SET @NewOrderID = 0;  -- Indicate that the customer was not found
+        RETURN;
+    END
 
-        -- Create a new order for the customer
-        INSERT INTO Orders (CustomerID)
-        VALUES (@CustomerID);
+    -- Create a new order for the customer
+    INSERT INTO Orders (CustomerID)
+    VALUES (@CustomerID);
 
-        -- Get the ID of the newly created order
-        SET @NewOrderID = SCOPE_IDENTITY();
+    -- Get the ID of the newly created order
+    SET @NewOrderID = SCOPE_IDENTITY();
 
-        -- Commit the transaction
-        COMMIT;
-    END TRY
-    BEGIN CATCH
-        -- An error occurred, rollback the transaction
-        ROLLBACK;
-
-        -- Set @NewOrderID to indicate an error
-        SET @NewOrderID = 0;
-
-        
-    END CATCH;
+    -- Commit the transaction
+    COMMIT;
+END TRY
+BEGIN CATCH
+    -- An error occurred, rollback the transaction
+    ROLLBACK;
+    SET @NewOrderID = 0;  -- Indicate that an error occurred
+    RETURN;
+END CATCH;
 END;
 GO
 

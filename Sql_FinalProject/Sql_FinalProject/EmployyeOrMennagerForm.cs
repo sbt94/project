@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Data.SqlClient;
+using System.Xml.Linq;
+using System.IO;
+
 
 namespace Sql_FinalProject
 {
@@ -24,9 +27,15 @@ namespace Sql_FinalProject
             }
             else
             {
+                string backuppath = @"C:\Users\Shahar\OneDrive\Documents\college\project\FinalSQL.bak";
                 ConnectionString = ConnectionClass.Managerconnection;
                 button1.Enabled = true;
                 button1.Visible = true;
+                backup_bt.Visible = true;
+                if (File.Exists(backuppath))
+                {
+                    restore_bt.Visible = true;
+                }
             }
         }
 
@@ -106,6 +115,38 @@ namespace Sql_FinalProject
         {
             new NewEmployeeForm().ShowDialog();
 
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            //BACKUP DATABASE dbName TO DISK = location + fileName
+            string dbName = "FinalSQL";
+            string location = @"C:\Users\Shahar\OneDrive\Documents\college\project\";
+            string fileName = "FinalSQL.bak";
+            string query = "BACKUP DATABASE " + dbName + " TO DISK = '" + location + fileName + "'";
+            using (SqlConnection connection = new SqlConnection(ConnectionString))
+            {
+                try
+                {
+                    // Open the connection
+                    connection.Open();
+
+                    // Create a command for the stored procedure
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
+                    {
+                        cmd.CommandType = CommandType.Text;
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Backup Created Successfully");
+                        restore_bt.Visible = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Handle any errors that may have occurred
+                    MessageBox.Show(ex.Message);
+                }
+            }
+            
         }
     }
 }

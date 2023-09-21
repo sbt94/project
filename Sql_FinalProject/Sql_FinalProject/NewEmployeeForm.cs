@@ -47,10 +47,10 @@ namespace Sql_FinalProject
                         cmd.Parameters.Add(new SqlParameter("@LastName", surname));
                         cmd.Parameters.Add(new SqlParameter("@Email", email));
                         cmd.Parameters.Add(new SqlParameter("@PhoneNumber", phone));
-                        cmd.Parameters.Add(new SqlParameter("@Address", salary));
                         cmd.Parameters.Add(new SqlParameter("@Password", password));
                         cmd.Parameters.Add(new SqlParameter("@HireDate", dateTime));
                         cmd.Parameters.Add(new SqlParameter("@UserTypeID", userType));
+                        cmd.Parameters.Add(new SqlParameter("@Salary", salary));
 
                         // Add output parameter for NewOrderID
                         SqlParameter outvar = new SqlParameter("@outvar", SqlDbType.Int);

@@ -31,6 +31,8 @@ namespace Sql_FinalProject
         private void makeReservation_Click(object sender, EventArgs e)
         {
             new ReservationForm(email).Show();
+            Order_food_bt.Visible = true;
+            makeReservation.Visible = false;
         }
 
         private void Order_food_bt_Click(object sender, EventArgs e)
